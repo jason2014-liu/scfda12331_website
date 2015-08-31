@@ -41,7 +41,7 @@
 		lazy-init="true">
 		<property name="entityManagerFactory" ref="entityManagerFactory" />
 	</bean>
-	
+
 	<tx:annotation-driven transaction-manager="transactionManager" />
 
 	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">
@@ -52,13 +52,12 @@
 	</tx:advice>
 
 	<aop:config>
-		<aop:pointcut id="businessService" expression="execution(* com.wondersgroup.website.service.*.*(..))" />
+		<aop:pointcut id="businessService"
+			expression="execution(* com.wondersgroup.website.service.*.*(..))" />
 		<aop:advisor advice-ref="transactionAdvice" pointcut-ref="businessService" />
 	</aop:config>
 
-	<!-- 
-	<context:load-time-weaver />
-	 -->
+	<!-- <context:load-time-weaver /> -->
 
 	<!-- post-processors for all standard config annotations -->
 	<context:annotation-config />
@@ -68,4 +67,39 @@
 			expression="org.springframework.stereotype.Controller" />
 	</context:component-scan>
 
+	<!-- quartz -->
+
+	<bean id="mockTask" class="com.lmstudio.comm.quartz.MockTask"></bean>
+
+	<!-- define jobDetail -->
+	<bean id="testJobDetail"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="mockTask" />
+		</property>
+		<property name="targetMethod">
+			<value>testTask</value>
+		</property>
+		<property name="concurrent" value="false" />
+		<!-- 是否允许任务并发执行。当值为false时，表示必须等到前一个线程处理完毕后才再启一个新的线程 -->
+	</bean>
+
+	<!-- define trigger -->
+	<bean id="testTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="testJobDetail" />
+		</property>
+		<property name="cronExpression">
+			<value>0/10 * * * * ?</value>
+		</property>
+	</bean>
+
+	<!--define scheduler -->
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref local="testTrigger" />
+			</list>
+		</property>
+	</bean>
 </beans>
